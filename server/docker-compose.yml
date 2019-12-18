@@ -1,0 +1,23 @@
+version: '3'
+services:
+  # Create redis cache
+  # redis_cach:
+  #   image: 'redis:alpine'
+  #   restart: 'always'
+  #   ports:
+  #     - '6379:6379'
+  # Create postgres database
+  local_db:
+    image: 'postgres'
+    restart: always
+    container_name: 'local_psql_db'
+    environment:
+      - POSTGRES_USER=local_user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=recipies
+    ports:
+      - '5432:5432'
+    # Set a volume some that database is not lost after shutting down the container.
+    volumes:
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql -- ONLY RUN FIRST TIME
+      - ./local_data:/var/lib/postgresql/data

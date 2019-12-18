@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS recipies;
+CREATE USER local_user WITH PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE "recipies" to local_user;
