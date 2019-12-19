@@ -1,7 +1,7 @@
 import { ObjectType, Field, Resolver, Mutation, Arg, Ctx, InputType } from 'type-graphql'
 import { compare } from 'bcryptjs'
 
-import { MyContext } from '../Context.interface'
+import { Context } from '../types/Context'
 import { User } from '../entity/User'
 import { generateRefreshToken, generateAccessToken, hashPassword } from '../utils/authUtils'
 import { sendRefreshToken } from '../utils/sendRefreshToken'
@@ -38,7 +38,7 @@ export class AuthResolver {
   @Mutation(() => AuthResponse)
   async signInWithEmail(
     @Arg('data') { email, password }: SignInInput,
-    @Ctx() { res }: MyContext,
+    @Ctx() { res }: Context,
   ): Promise<AuthResponse> {
     const user = await User.findOne({ where: { email } })
 

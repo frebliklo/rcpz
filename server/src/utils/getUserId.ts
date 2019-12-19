@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { verify } from 'jsonwebtoken'
 
-import { AuthToken } from './authUtils'
+import { AuthToken } from '../types/AuthToken'
 
 export const getUserId = (req: Request) => {
   const authorization = req.headers['authorization']

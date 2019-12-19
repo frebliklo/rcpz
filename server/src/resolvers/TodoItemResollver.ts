@@ -2,13 +2,13 @@ import { Resolver, Query, Ctx, UseMiddleware, Mutation, Arg } from 'type-graphql
 
 import { TodoItem } from '../entity/Todoitem'
 import { isAuth } from '../middleware/type-graphql/isAuth'
-import { MyContext } from '../Context.interface'
+import { Context } from '../types/Context'
 
 @Resolver(of => TodoItem)
 export class TodoItemResolver {
   @Query(type => [TodoItem], { description: 'Get the list for the currently authenticated user' })
   @UseMiddleware(isAuth)
-  myTodos(@Ctx() { payload }: MyContext): Promise<TodoItem[]> {
+  myTodos(@Ctx() { payload }: Context): Promise<TodoItem[]> {
     if (!payload) throw new Error('No user in context')
 
     return TodoItem.find({ where: { ownerId: payload.userId }, order: { updatedAt: 'DESC' } })
@@ -16,7 +16,7 @@ export class TodoItemResolver {
 
   @Mutation(type => TodoItem, { description: 'Add a todo to the currently authenticated user' })
   @UseMiddleware(isAuth)
-  async addTodo(@Arg('title') title: string, @Ctx() { payload }: MyContext): Promise<TodoItem> {
+  async addTodo(@Arg('title') title: string, @Ctx() { payload }: Context): Promise<TodoItem> {
     if (!payload) throw new Error('No user in context')
 
     const item = await TodoItem.create({
@@ -29,7 +29,7 @@ export class TodoItemResolver {
 
   @Mutation(type => TodoItem, { description: 'Toggle the completed status of a todo by id' })
   @UseMiddleware(isAuth)
-  async toggleTodo(@Arg('id') id: string, @Ctx() { payload }: MyContext): Promise<TodoItem> {
+  async toggleTodo(@Arg('id') id: string, @Ctx() { payload }: Context): Promise<TodoItem> {
     if (!payload) throw new Error('No user in context')
 
     const item = await TodoItem.findOneOrFail({ where: { id, ownerId: payload.userId } })

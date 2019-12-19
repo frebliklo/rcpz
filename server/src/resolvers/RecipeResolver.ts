@@ -11,10 +11,10 @@ import {
   Root,
 } from 'type-graphql'
 
-import { MyContext } from '../Context.interface'
 import { Recipe } from '../entity/Recipe'
 import { User } from '../entity/User'
 import { isAuth } from '../middleware/type-graphql/isAuth'
+import { Context } from '../types/Context'
 
 @InputType()
 class CreateRecipeInput {
@@ -40,8 +40,8 @@ class UpdateRecipeInput extends CreateRecipeInput {
 @Resolver(of => Recipe)
 export class RecipeResolver {
   @FieldResolver(() => User)
-  async author(@Root() recipe: Recipe): Promise<User> {
-    const user = await User.findOne({ where: { id: recipe.authorId } })
+  async author(@Root() recipe: Recipe, @Ctx() { userLoader }: Context): Promise<User> {
+    const user = await userLoader.load(recipe.authorId)
 
     if (!user) {
       throw new Error('Could not find author')
@@ -52,7 +52,7 @@ export class RecipeResolver {
 
   @Query(() => [Recipe], { description: 'Find the currently authenticated users recipes' })
   @UseMiddleware(isAuth)
-  async myRecipes(@Ctx() { payload }: MyContext): Promise<Recipe[]> {
+  async myRecipes(@Ctx() { payload }: Context): Promise<Recipe[]> {
     if (!payload) throw new Error('No user in context')
 
     const recipes = await Recipe.find({ where: { authorId: payload.userId } })
@@ -66,7 +66,7 @@ export class RecipeResolver {
   @UseMiddleware(isAuth)
   async createRecipe(
     @Arg('data') data: CreateRecipeInput,
-    @Ctx() { payload }: MyContext,
+    @Ctx() { payload }: Context,
   ): Promise<Recipe> {
     if (!payload) throw new Error('No user in context')
 
@@ -83,7 +83,7 @@ export class RecipeResolver {
   async updateRecipe(
     @Arg('id') id: string,
     @Arg('data') data: UpdateRecipeInput,
-    @Ctx() { payload }: MyContext,
+    @Ctx() { payload }: Context,
   ): Promise<Recipe> {
     if (!payload) throw new Error('No user in context')
 
@@ -98,7 +98,7 @@ export class RecipeResolver {
 
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
-  async deleteRecipe(@Arg('id') id: string, @Ctx() { payload }: MyContext): Promise<Boolean> {
+  async deleteRecipe(@Arg('id') id: string, @Ctx() { payload }: Context): Promise<Boolean> {
     if (!payload) throw new Error('No user in context')
 
     const recipe = await Recipe.delete(id)

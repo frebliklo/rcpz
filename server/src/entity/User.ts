@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from 'typeorm'
 import { ObjectType, Field, Int, ID, Root, Ctx, registerEnumType } from 'type-graphql'
-import { MyContext } from '../Context.interface'
-import { getUserId } from '../utils/getUserId'
+
 import { Recipe } from './Recipe'
 import { TodoItem } from './Todoitem'
+import { Context } from '../types/Context'
+import { getUserId } from '../utils/getUserId'
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -53,7 +54,7 @@ export class User extends BaseEntity {
   email_verified: boolean
 
   @Field(type => String, { nullable: true, name: 'email' })
-  emailField(@Root() user: User, @Ctx() { req }: MyContext) {
+  emailField(@Root() user: User, @Ctx() { req }: Context) {
     const userId = getUserId(req)
 
     if (userId === user.id) {
@@ -64,7 +65,7 @@ export class User extends BaseEntity {
   }
 
   @Field(type => Boolean, { nullable: true, name: 'emailVerified' })
-  emailVerifiedField(@Root() user: User, @Ctx() { req }: MyContext) {
+  emailVerifiedField(@Root() user: User, @Ctx() { req }: Context) {
     const userId = getUserId(req)
 
     if (userId === user.id) {
@@ -87,7 +88,7 @@ export class User extends BaseEntity {
     name: 'tokenVersion',
     description: 'Get the refresh token version for the currently authenticated user',
   })
-  tokenVersionField(@Root() user: User, @Ctx() { req }: MyContext) {
+  tokenVersionField(@Root() user: User, @Ctx() { req }: Context) {
     const userId = getUserId(req)
 
     if (userId === user.id) {

@@ -11,6 +11,7 @@ import { User } from './entity/User'
 import resolvers from './resolvers'
 import { generateAccessToken, generateRefreshToken } from './utils/authUtils'
 import { sendRefreshToken } from './utils/sendRefreshToken'
+import { userLoader } from './loaders/UserLoader'
 
 const main = async () => {
   await createConnection()
@@ -58,7 +59,7 @@ const main = async () => {
       resolvers,
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res }),
+    context: ({ req, res }) => ({ req, res, userLoader: userLoader() }),
   })
 
   apolloServer.applyMiddleware({ app })

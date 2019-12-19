@@ -11,12 +11,12 @@ import {
   Field,
 } from 'type-graphql'
 
-import { MyContext } from '../Context.interface'
 import { Recipe } from '../entity/Recipe'
+import { TodoItem } from '../entity/Todoitem'
 import { User } from '../entity/User'
 import { isAuth } from '../middleware/type-graphql/isAuth'
+import { Context } from '../types/Context'
 import { getUserId } from '../utils/getUserId'
-import { TodoItem } from '../entity/Todoitem'
 
 @InputType()
 class UpdateUserInput {
@@ -30,7 +30,7 @@ class UpdateUserInput {
 @Resolver(of => User)
 export class UserResolver {
   @FieldResolver(() => [Recipe])
-  async recipes(@Root() user: User, @Ctx() { req }: MyContext): Promise<Recipe[]> {
+  async recipes(@Root() user: User, @Ctx() { req }: Context): Promise<Recipe[]> {
     const userId = getUserId(req)
 
     if (userId === user.id) {
@@ -45,7 +45,7 @@ export class UserResolver {
   }
 
   @FieldResolver(() => [TodoItem])
-  async todos(@Root() user: User, @Ctx() { req }: MyContext): Promise<TodoItem[]> {
+  async todos(@Root() user: User, @Ctx() { req }: Context): Promise<TodoItem[]> {
     const userId = getUserId(req)
 
     if (!userId || userId !== user.id) return []
@@ -57,7 +57,7 @@ export class UserResolver {
 
   @Query(() => User, { description: 'Find the currently authenticated user' })
   @UseMiddleware(isAuth)
-  me(@Ctx() { payload }: MyContext) {
+  me(@Ctx() { payload }: Context) {
     if (!payload) throw new Error('No user in context')
 
     return User.findOne({ where: { id: payload.userId } })
@@ -79,10 +79,7 @@ export class UserResolver {
 
   @Mutation(() => User)
   @UseMiddleware(isAuth)
-  async updateUser(
-    @Arg('data') data: UpdateUserInput,
-    @Ctx() { payload }: MyContext,
-  ): Promise<User> {
+  async updateUser(@Arg('data') data: UpdateUserInput, @Ctx() { payload }: Context): Promise<User> {
     if (!payload) throw new Error('No user in context')
 
     const changes: any = {}
@@ -101,7 +98,7 @@ export class UserResolver {
 
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
-  async deleteUser(@Ctx() { payload }: MyContext): Promise<Boolean> {
+  async deleteUser(@Ctx() { payload }: Context): Promise<Boolean> {
     if (!payload) throw new Error('No user in context')
 
     const user = await User.delete(payload.userId)
