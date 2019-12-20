@@ -1,37 +1,11 @@
-import { ObjectType, Field, Resolver, Mutation, Arg, Ctx, InputType } from 'type-graphql'
+import { Resolver, Mutation, Arg, Ctx } from 'type-graphql'
 import { compare } from 'bcryptjs'
 
 import { Context } from '../types/Context'
 import { User } from '../entity/User'
+import { AuthResponse, SignInInput, RegisterInput } from '../types/Auth'
 import { generateRefreshToken, generateAccessToken, hashPassword } from '../utils/authUtils'
 import { sendRefreshToken } from '../utils/sendRefreshToken'
-
-@ObjectType()
-class AuthResponse {
-  @Field()
-  accessToken: string
-
-  @Field(() => User)
-  user: User
-}
-
-@InputType()
-class SignInInput {
-  @Field()
-  email: string
-
-  @Field()
-  password: string
-}
-
-@InputType()
-class RegisterInput extends SignInInput {
-  @Field()
-  firstName: string
-
-  @Field()
-  lastName: string
-}
 
 @Resolver()
 export class AuthResolver {

@@ -4,42 +4,23 @@ import {
   Ctx,
   UseMiddleware,
   Mutation,
-  InputType,
-  Field,
   Arg,
   FieldResolver,
   Root,
+  Args,
 } from 'type-graphql'
 
 import { Recipe } from '../entity/Recipe'
 import { User } from '../entity/User'
 import { isAuth } from '../middleware/type-graphql/isAuth'
 import { Context } from '../types/Context'
-
-@InputType()
-class CreateRecipeInput {
-  @Field(() => String)
-  title: string
-
-  @Field(() => String, { nullable: true })
-  description: string
-
-  @Field(() => Boolean, { nullable: true, defaultValue: false })
-  published: boolean
-}
-
-@InputType()
-class UpdateRecipeInput extends CreateRecipeInput {
-  @Field(() => String, { nullable: true })
-  title: string
-
-  @Field(() => Boolean, { nullable: true })
-  published: boolean
-}
+import { CreateRecipeInput, UpdateRecipeInput } from '../types/RecipeInputs'
+import { PaginationSearchArgs } from '../types/PaginationArgs'
+import { getConnection } from 'typeorm'
 
 @Resolver(of => Recipe)
 export class RecipeResolver {
-  @FieldResolver(() => User)
+  @FieldResolver(type => User)
   async author(@Root() recipe: Recipe, @Ctx() { userLoader }: Context): Promise<User> {
     const user = await userLoader.load(recipe.authorId)
 
@@ -50,7 +31,25 @@ export class RecipeResolver {
     return user
   }
 
-  @Query(() => [Recipe], { description: 'Find the currently authenticated users recipes' })
+  @Query(type => [Recipe], { description: 'Find published recipes' })
+  recipes(@Args() { skip, take, query }: PaginationSearchArgs): Promise<Recipe[]> {
+    let recipes = getConnection()
+      .getRepository(Recipe)
+      .createQueryBuilder('r')
+      .where('r.published = :published', { published: true })
+
+    if (skip) recipes = recipes.skip(skip)
+    if (take) recipes = recipes.take(take)
+    if (query) {
+      recipes = recipes
+        .andWhere('r.title ilike :query', { query: `%${query}%` })
+        .orWhere('r.description ilike :query', { query: `%${query}%` })
+    }
+
+    return recipes.getMany()
+  }
+
+  @Query(type => [Recipe], { description: 'Find the currently authenticated users recipes' })
   @UseMiddleware(isAuth)
   async myRecipes(@Ctx() { payload }: Context): Promise<Recipe[]> {
     if (!payload) throw new Error('No user in context')
@@ -60,7 +59,7 @@ export class RecipeResolver {
     return recipes
   }
 
-  @Mutation(() => Recipe, {
+  @Mutation(type => Recipe, {
     description: 'Author a new recipe for the currently authenticated user',
   })
   @UseMiddleware(isAuth)
@@ -78,7 +77,7 @@ export class RecipeResolver {
     return recipe
   }
 
-  @Mutation(() => Recipe)
+  @Mutation(type => Recipe)
   @UseMiddleware(isAuth)
   async updateRecipe(
     @Arg('id') id: string,
@@ -96,7 +95,7 @@ export class RecipeResolver {
     return recipe
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(type => Boolean)
   @UseMiddleware(isAuth)
   async deleteRecipe(@Arg('id') id: string, @Ctx() { payload }: Context): Promise<Boolean> {
     if (!payload) throw new Error('No user in context')

@@ -7,8 +7,7 @@ import {
   FieldResolver,
   Root,
   Mutation,
-  InputType,
-  Field,
+  Args,
 } from 'type-graphql'
 
 import { Recipe } from '../entity/Recipe'
@@ -16,20 +15,14 @@ import { TodoItem } from '../entity/Todoitem'
 import { User } from '../entity/User'
 import { isAuth } from '../middleware/type-graphql/isAuth'
 import { Context } from '../types/Context'
+import { UpdateUserInput } from '../types/UserInput'
 import { getUserId } from '../utils/getUserId'
-
-@InputType()
-class UpdateUserInput {
-  @Field(() => String, { nullable: true })
-  firstName: string
-
-  @Field(() => String, { nullable: true })
-  lastName: string
-}
+import { PaginationSearchArgs } from '../types/PaginationArgs'
+import { getConnection } from 'typeorm'
 
 @Resolver(of => User)
 export class UserResolver {
-  @FieldResolver(() => [Recipe])
+  @FieldResolver(type => [Recipe])
   async recipes(@Root() user: User, @Ctx() { req }: Context): Promise<Recipe[]> {
     const userId = getUserId(req)
 
@@ -44,7 +37,7 @@ export class UserResolver {
     return recipes
   }
 
-  @FieldResolver(() => [TodoItem])
+  @FieldResolver(type => [TodoItem])
   async todos(@Root() user: User, @Ctx() { req }: Context): Promise<TodoItem[]> {
     const userId = getUserId(req)
 
@@ -55,7 +48,7 @@ export class UserResolver {
     return todos
   }
 
-  @Query(() => User, { description: 'Find the currently authenticated user' })
+  @Query(type => User, { description: 'Find the currently authenticated user' })
   @UseMiddleware(isAuth)
   me(@Ctx() { payload }: Context) {
     if (!payload) throw new Error('No user in context')
@@ -63,7 +56,7 @@ export class UserResolver {
     return User.findOne({ where: { id: payload.userId } })
   }
 
-  @Query(() => User, { description: 'Find a user by id' })
+  @Query(type => User, { description: 'Find a user by id' })
   async user(@Arg('id') id: string): Promise<User | null> {
     const user = await User.findOne({ where: { id } })
 
@@ -72,12 +65,24 @@ export class UserResolver {
     return user
   }
 
-  @Query(() => [User])
-  users() {
-    return User.find()
+  @Query(type => [User])
+  users(@Args() { skip, take, query }: PaginationSearchArgs): Promise<User[]> {
+    let users = getConnection()
+      .getRepository(User)
+      .createQueryBuilder('u')
+
+    if (skip) users = users.skip(skip)
+    if (take) users = users.take(take)
+    if (query) {
+      users = users
+        .andWhere('u.first_name ilike :query', { query: `%${query}%` })
+        .orWhere('u.last_name ilike :query', { query: `%${query}%` })
+    }
+
+    return users.getMany()
   }
 
-  @Mutation(() => User)
+  @Mutation(type => User)
   @UseMiddleware(isAuth)
   async updateUser(@Arg('data') data: UpdateUserInput, @Ctx() { payload }: Context): Promise<User> {
     if (!payload) throw new Error('No user in context')
@@ -96,7 +101,7 @@ export class UserResolver {
     return user
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(type => Boolean)
   @UseMiddleware(isAuth)
   async deleteUser(@Ctx() { payload }: Context): Promise<Boolean> {
     if (!payload) throw new Error('No user in context')

@@ -1,65 +1,59 @@
 import 'reflect-metadata'
 import { ApolloServer } from 'apollo-server-express'
+import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
-import { verify } from 'jsonwebtoken'
+import queryComplexity, {
+  fieldExtensionsEstimator,
+  simpleEstimator,
+} from 'graphql-query-complexity'
 import { buildSchema } from 'type-graphql'
 import { createConnection } from 'typeorm'
 
-import { User } from './entity/User'
-import resolvers from './resolvers'
-import { generateAccessToken, generateRefreshToken } from './utils/authUtils'
-import { sendRefreshToken } from './utils/sendRefreshToken'
+import { recipeLoader } from './loaders/RecipeLoader'
 import { userLoader } from './loaders/UserLoader'
+import resolvers from './resolvers'
+import { authRouter, todoRouter } from './routers'
 
 const main = async () => {
   await createConnection()
 
   const app = express()
 
+  app.use(bodyParser.json())
   app.use(cookieParser())
   app.use(cors())
 
-  app.get('/', (req, res) => res.send('Hello'))
-
-  app.post('/refresh_token', async (req, res) => {
-    const token = req.cookies.jid
-
-    if (!token) {
-      res.send({ ok: false, accessToken: '' })
-    }
-
-    let payload: any = null
-
-    try {
-      payload = verify(token, process.env.REFRESH_TOKEN_SECRET!)
-    } catch (error) {
-      console.log(error)
-      return res.send({ ok: false, accessToken: '' })
-    }
-
-    const user = await User.findOne({ id: payload.userId })
-
-    if (!user) {
-      return res.send({ ok: false, accessToken: '' })
-    }
-
-    if (user.token_version !== payload.tokenVersion) {
-      return res.send({ ok: false, accessToken: '' })
-    }
-
-    sendRefreshToken(res, generateRefreshToken(user))
-
-    return res.send({ ok: true, accessToken: generateAccessToken(user) })
-  })
+  app.use('/auth', authRouter)
+  app.use('/todos', todoRouter)
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers,
       validate: false,
     }),
-    context: ({ req, res }) => ({ req, res, userLoader: userLoader() }),
+    context: ({ req, res }) => ({
+      req,
+      res,
+      recipeLoader: recipeLoader(),
+      userLoader: userLoader(),
+    }),
+    validationRules: [
+      queryComplexity({
+        maximumComplexity: 30,
+        variables: {},
+        onComplete: (complexity: number) => {
+          console.log('Query Complexity:', complexity)
+        },
+        estimators: [
+          fieldExtensionsEstimator(),
+          simpleEstimator({
+            defaultComplexity: 1,
+          }),
+        ],
+      }) as any,
+    ],
   })
 
   apolloServer.applyMiddleware({ app })

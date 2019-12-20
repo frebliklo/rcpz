@@ -1,16 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from 'typeorm'
 import { ObjectType, Field, Int, ID, Root, Ctx, registerEnumType } from 'type-graphql'
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from 'typeorm'
 
 import { Recipe } from './Recipe'
 import { TodoItem } from './Todoitem'
 import { Context } from '../types/Context'
+import { UserRole } from '../types/UserInput'
 import { getUserId } from '../utils/getUserId'
-
-export enum UserRole {
-  ADMIN = 'admin',
-  EDITOR = 'editor',
-  VIEWER = 'viewer',
-}
 
 registerEnumType(UserRole, {
   name: 'UserRole',
