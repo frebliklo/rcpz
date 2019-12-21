@@ -16,7 +16,8 @@ import { isAuth } from '../middleware/type-graphql/isAuth'
 import { Context } from '../types/Context'
 import { CreateRecipeInput, UpdateRecipeInput } from '../types/RecipeInputs'
 import { PaginationSearchArgs } from '../types/PaginationArgs'
-import { getConnection } from 'typeorm'
+import { getConnection, In } from 'typeorm'
+import { Ingredient } from '../entity/Ingredient'
 
 @Resolver(of => Recipe)
 export class RecipeResolver {
@@ -29,6 +30,13 @@ export class RecipeResolver {
     }
 
     return user
+  }
+
+  @FieldResolver(type => [Ingredient])
+  async ingredients(@Root() recipe: Recipe): Promise<Ingredient[]> {
+    const ingredients = await Ingredient.find({ where: { recipeId: recipe.id } })
+
+    return ingredients
   }
 
   @Query(type => [Recipe], { description: 'Find published recipes' })

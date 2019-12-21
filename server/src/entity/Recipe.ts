@@ -1,38 +1,41 @@
 import { ObjectType, Field, ID } from 'type-graphql'
-import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm'
+import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm'
 import { User } from './User'
 
 import { RelationColumn } from '../utils/entity/RelationColumn'
+import { Ingredient } from './Ingredient'
 
 @ObjectType()
 @Entity('recipes')
 export class Recipe extends BaseEntity {
-  @Field(() => ID)
+  @Field(type => ID)
   @PrimaryGeneratedColumn('uuid')
   readonly id: string
 
-  @Field()
+  @Field(type => String)
   @Column('text')
   title: string
 
-  @Field({ nullable: true })
+  @Field(type => String, { nullable: true })
   @Column('text', { nullable: true })
   description?: string
 
-  @Field({ nullable: true })
+  @Field(type => String, { nullable: true })
   @Column('text', { nullable: true })
   photo?: string
 
-  @Field({ nullable: true })
-  @Column('text', { nullable: true })
-  items?: string
+  @OneToMany(
+    type => Ingredient,
+    ingredient => ingredient.recipe,
+  )
+  ingredients: Ingredient[]
 
-  @Field(() => Boolean)
+  @Field(type => Boolean)
   @Column('bool', { default: false })
   published: boolean
 
-  @Field(() => User)
-  @ManyToOne(() => User)
+  @Field(type => User)
+  @ManyToOne(type => User)
   author: User
   @RelationColumn()
   authorId: string
