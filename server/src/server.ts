@@ -23,7 +23,12 @@ const main = async () => {
 
   app.use(bodyParser.json())
   app.use(cookieParser())
-  app.use(cors())
+  app.use(
+    cors({
+      origin: 'http://localhost:3000',
+      credentials: true,
+    }),
+  )
 
   app.use('/auth', authRouter)
   app.use('/todos', todoRouter)
@@ -31,7 +36,6 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers,
-      validate: false,
     }),
     context: ({ req, res }) => ({
       req,
@@ -39,24 +43,25 @@ const main = async () => {
       recipeLoader: recipeLoader(),
       userLoader: userLoader(),
     }),
-    validationRules: [
-      queryComplexity({
-        maximumComplexity: 30,
-        variables: {},
-        onComplete: (complexity: number) => {
-          console.log('Query Complexity:', complexity)
-        },
-        estimators: [
-          fieldExtensionsEstimator(),
-          simpleEstimator({
-            defaultComplexity: 1,
-          }),
-        ],
-      }) as any,
-    ],
+    // See this for working variables: https://github.com/MichalLytek/type-graphql/blob/4501867fffe3e6f5b3e71af0b71651efcd48d9c3/examples/query-complexity/index.ts#L16-L64
+    //
+    // validationRules: [
+    //   queryComplexity({
+    //     maximumComplexity: 30,
+    //     onComplete: (complexity: number) => {
+    //       console.log('Query Complexity:', complexity)
+    //     },
+    //     estimators: [
+    //       fieldExtensionsEstimator(),
+    //       simpleEstimator({
+    //         defaultComplexity: 1,
+    //       }),
+    //     ],
+    //   }) as any,
+    // ],
   })
 
-  apolloServer.applyMiddleware({ app })
+  apolloServer.applyMiddleware({ app, cors: false })
 
   const PORT = 4000 || process.env.PORT
 

@@ -1,0 +1,9 @@
+mutation SignIn($input: SignInInput!) {
+  signInWithEmail(data: $input) {
+    accessToken
+    user {
+      id
+      firstName
+    }
+  }
+}

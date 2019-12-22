@@ -1,0 +1,9 @@
+mutation SignUp($input: RegisterInput!) {
+  registerWithEmail(data: $input) {
+    accessToken
+    user {
+      id
+      firstName
+    }
+  }
+}

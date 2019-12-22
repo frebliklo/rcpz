@@ -5,7 +5,7 @@ import { User } from '../entity/User'
 
 export function generateAccessToken(user: User) {
   return sign({ userId: user.id }, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: process.env.NODE_ENV === 'production' ? '15m' : '2h',
+    expiresIn: '15m',
   })
 }
 

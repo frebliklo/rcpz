@@ -82,7 +82,17 @@ export class RecipeResolver {
       authorId: payload.userId,
     }).save()
 
-    return recipe
+    data.ingredients.forEach(async ingredient => {
+      await Ingredient.create({
+        ...ingredient,
+        recipe,
+        recipeId: recipe.id,
+      }).save()
+    })
+
+    const newRecipe = await Recipe.findOneOrFail({ where: { id: recipe.id } })
+
+    return newRecipe
   }
 
   @Mutation(type => Recipe)

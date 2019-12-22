@@ -9,7 +9,7 @@ import { sendRefreshToken } from '../utils/sendRefreshToken'
 
 @Resolver()
 export class AuthResolver {
-  @Mutation(() => AuthResponse)
+  @Mutation(type => AuthResponse)
   async signInWithEmail(
     @Arg('data') { email, password }: SignInInput,
     @Ctx() { res }: Context,
@@ -43,7 +43,14 @@ export class AuthResolver {
   //   return true
   // }
 
-  @Mutation(() => AuthResponse)
+  @Mutation(type => Boolean)
+  async logout(@Ctx() { res }: Context) {
+    sendRefreshToken(res, '')
+
+    return true
+  }
+
+  @Mutation(type => AuthResponse)
   async registerWithEmail(
     @Arg('data') { email, password, firstName, lastName }: RegisterInput,
   ): Promise<AuthResponse | null> {
@@ -53,7 +60,7 @@ export class AuthResolver {
       const user = await User.create({
         email,
         first_name: firstName,
-        last_name: lastName,
+        last_name: lastName ? lastName : '',
         password: hashedPassword,
       }).save()
 

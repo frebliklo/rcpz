@@ -31,8 +31,8 @@ export class RegisterInput extends SignInInput {
   @Field(type => String)
   firstName: string
 
-  @Field(type => String)
-  lastName: string
+  @Field(type => String, { nullable: true })
+  lastName?: string
 
   @Field(type => UserRole, { nullable: true })
   role?: UserRole

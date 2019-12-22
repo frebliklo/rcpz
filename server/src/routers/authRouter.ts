@@ -40,7 +40,7 @@ router.post('/refresh_token', async (req, res) => {
   return res.send({ ok: true, accessToken: generateAccessToken(user) })
 })
 
-router.post('/signin', async (req: SingInRequest, res: Response) => {
+router.post('/signup', async (req: SingInRequest, res: Response) => {
   const { email, password, first_name, last_name, role } = req.body
 
   const hashedPassword = await hashPassword(password)

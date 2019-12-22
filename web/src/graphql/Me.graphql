@@ -1,0 +1,19 @@
+query Me {
+  me {
+    id
+    email
+    firstName
+    lastName
+    todos {
+      id
+      createdAt
+      updatedAt
+      title
+      completed
+    }
+    recipes {
+      id
+      title
+    }
+  }
+}
