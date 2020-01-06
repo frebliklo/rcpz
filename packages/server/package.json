@@ -1,6 +1,6 @@
 {
-  "name": "@recipes/server",
-  "version": "0.0.2",
+  "name": "@rcpz/server",
+  "version": "0.1.0",
   "description": "Awesome project developed with TypeORM.",
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
